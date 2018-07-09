@@ -14,11 +14,10 @@ data.raw <- read.csv("~/R Projects/Estatistica Hear Attack Detection/data.csv", 
 #check for missing values and look how many unique values there are for each variable using the sapply() 
 #function which applies the function passed as argument to each column of the dataframe
 
-#plot(sapply(data.raw,function(x) sum(is.na(x))))
 
-sapply(data.raw,function(x) sum(is.na(x)))
-sapply(data.raw, function(x) length(unique(x)))
 
+#sapply(data.raw,function(x) sum(is.na(x)))
+#sapply(data.raw, function(x) length(unique(x)))
 
 missmap(data.raw, main = "Missing values vs Observação")
 data <- subset(data.raw,select=c(1,2,3,4,5,6,7,8,9,10,14))
@@ -74,7 +73,7 @@ sapply(data,function(x) sum(is.na(x)))
 corrplot(cor(data), method="circle")
 
 
-# ====== Verificando assunções pra regressão logística ========
+# ====== Verificando pressupostos para regressão logística ========
 model <- glm(num ~.,family=binomial(link='logit'),data=data)
 summary(model)
 plot(model, which = 4, id.n = 3)
@@ -86,6 +85,7 @@ probabilities <- predict(model, type = "response")
 predicted.classes <- ifelse(probabilities > 0.5, "1","0")
 
 predictors <- colnames(data)
+       
 data <- data %>%
   mutate(logit = log(probabilities/(1-probabilities))) %>%
   gather(key = "predictors", value = "predictor.value", -logit)
@@ -94,6 +94,9 @@ ggplot(data, aes(logit, predictor.value))+
   geom_smooth(method = "loess") + 
   theme_bw() + 
   facet_wrap(~predictors, scales = "free_y") 
+#Correlação entre as variáveis
+corrplot(cor(dataa), method="circle")
+
 #=========== Ajuste do Modelo ============
 subset = -c(1,4,8,7,5,6)
 
@@ -119,11 +122,7 @@ ggplot(dataa, aes(logit, predictor.value))+
   geom_smooth(method = "loess") + 
   theme_bw() + 
   facet_wrap(~predictors, scales = "free_y")
-#anova(model, test="Chisq")
-#anova(model2, test="Chisq")
-#regTermTest(model, test.terms, method=c("Wald"))
-#anova(model,model2)
- 
+
 #======== testes =========
 
 ##teste
@@ -181,30 +180,17 @@ mean(mean_acc_rate_svm)
 summary(mean_acc_rate_glm)
 summary(mean_acc_rate_svm)
 
-
+##Testar igualdade das médias Regressão logística vs SVM
 t.test(mean_acc_rate_glm)
 t.test(mean_acc_rate_svm)
 res <- wilcox.test(mean_acc_rate_glm, mean_acc_rate_svm,paired = TRUE, alternative = "greater") 
 res
 
-summary(mean_acc_rate_glm)
-#> erro = 1.96*(sqrt(var(mean_acc_rate_glm))/sqrt(n))
-#> erro
-#[1] 0.005762322
-#> plotCI(x, mean_acc_rate_glm, ui=mean_acc_rate_glm-erro, li=mean_acc_rate_glm+erro)
-#> x <- 1:n
-#> plotCI(x, mean_acc_rate_glm, ui=mean_acc_rate_glm-erro, li=mean_acc_rate_glm+erro)
-
-
-pad = function(x, k, n = 1L, append = TRUE)
-{
-  dims = replicate(length(dim(x)), substitute(), simplify = FALSE)
-  if(append) dims[[k]] = c((n + 1):dim(x)[[k]], rep_len(NA, n))
-  else dims[[k]] = c(rep_len(NA, n), 1:(dim(x)[[k]] - n))
-  do.call("[", c(list(x), dims))
-}
-
- ###### PLOT HIST ############
+###########################################################################       
+      ## OPCIONAL ##
+       
+###### PLOTAGEM DOS HISTOGRAMAS DAS VARIÁVEIS (AGRUPADAS PELA RESPECTIVA CLASSE "0" ou "1") ############
+ 
 date = data.frame(data[(data$num==0),-c(1)] , group="0")
 date1 = data.frame(data[(data$num==1),-c(1)] , group="1")
 x = 1:nrow(data)
@@ -270,11 +256,5 @@ dat = rbind(date, date1)
 plot9<-ggplot(dat, aes(x=dat$oldpeak, fill=dat$num, color=dat$num)) +
   geom_histogram(position="identity", alpha=0.5)
 
-
-summary(dat)
 grid.arrange(plot1, plot2,plot3,plot4,plot5,plot6,plot7,plot8,plot9, ncol=3, nrow=3)
 
-
-
-model.data <- augment(model)
-model.data
